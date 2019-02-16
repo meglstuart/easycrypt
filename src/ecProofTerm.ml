@@ -306,6 +306,12 @@ let rec pf_find_occurence
       then EcMatching.fmrigid
       else EcMatching.fmdelta in
 
+  let mode =
+    let env = LDecl.toenv pt.pte_hy in
+    if    EcGState.getflag "match-mode" (EcEnv.gstate env)
+    then  EcMatching.fmsearch
+    else  mode in
+
   let trymatch bds tp =
     if not (keycheck tp key) then `Continue else
 

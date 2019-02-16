@@ -467,8 +467,16 @@ and process_sct_close (scope : EcScope.scope) name =
 and process_tactics (scope : EcScope.scope) t =
   let mode = (Pragma.get ()).pm_check in
   match t with
-  | `Actual t  -> snd (EcScope.Tactics.process scope mode t)
-  | `Proof  pm -> EcScope.Tactics.proof   scope mode pm.pm_strict
+  | `Actual (fmmode, t) ->
+      let fmmode =
+        match fmmode with `Normal -> false | `Rigid -> true
+      in
+      EcGState.tmpset "match-mode" fmmode
+        (snd |- EcScope.Tactics.process scope mode)
+        t (EcEnv.gstate (EcScope.env scope))
+
+  | `Proof pm ->
+      EcScope.Tactics.proof scope mode pm.pm_strict
 
 (* -------------------------------------------------------------------- *)
 and process_save (scope : EcScope.scope) ed =

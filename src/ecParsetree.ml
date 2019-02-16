@@ -1114,13 +1114,18 @@ type global_action =
   | GsctOpen     of osymbol_r
   | GsctClose    of osymbol_r
   | Grealize     of prealize located
-  | Gtactics     of [`Proof of proofmode | `Actual of ptactic list]
+  | Gtactics     of tactics
   | Gtcdump      of (tcdump * ptactic list)
   | Gprover_info of pprover_infos
   | Gsave        of save located
   | Gpragma      of psymbol
   | Goption      of (psymbol * [`Bool of bool | `Int of int])
   | GdumpWhy3    of string
+
+and tactics = [
+  | `Proof  of proofmode
+  | `Actual of [`Normal | `Rigid] * ptactic list
+]
 
 type global = {
   gl_action : global_action located;

@@ -31,6 +31,7 @@ val setvalue : string -> value -> gstate -> unit
 (* -------------------------------------------------------------------- *)
 val getflag : ?default:bool -> string -> gstate -> bool
 val setflag : string -> bool -> gstate -> unit
+val tmpset  : string -> bool -> ('a -> 'b) -> 'a -> gstate -> 'b
 
 (* --------------------------------------------------------------------- *)
 type nid_t

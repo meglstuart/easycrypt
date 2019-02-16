@@ -214,6 +214,7 @@
     "undo"        , UNDO       ;        (* KW: internal *)
     "debug"       , DEBUG      ;        (* KW: internal *)
     "pragma"      , PRAGMA     ;        (* KW: internal *)
+    "rigid"       , RIGID      ;        (* KW: internal *)
 
     "Top"         , TOP        ;        (* KW: global *)
     "Self"        , SELF       ;        (* KW: global *)

@@ -131,7 +131,8 @@
       fp_head = head;
       fp_args = args; }
 
-  let mk_core_tactic t = { pt_core = t; pt_intros = []; }
+  let mk_core_tactic ?(ip = []) t =
+    { pt_core = t; pt_intros = ip; }
 
   let mk_tactic_of_tactics ts =
     mk_core_tactic (mk_loc ts.pl_loc (Pseq (unloc ts)))
@@ -522,6 +523,7 @@
 %token RETURN
 %token REWRITE
 %token RIGHT
+%token RIGID
 %token RND
 %token RPAREN
 %token RPBRACE
@@ -642,6 +644,7 @@ _lident:
 | WLOG     { "wlog"     }
 | EXLIM    { "exlim"    }
 | ECALL    { "ecall"    }
+| RIGID    { "rigid"    }
 
 | x=RING  { match x with `Eq -> "ringeq"  | `Raw -> "ring"  }
 | x=FIELD { match x with `Eq -> "fieldeq" | `Raw -> "field" }
@@ -3155,7 +3158,7 @@ tactic_ip:
     { mk_core_tactic t }
 
 | t=tactic_core ip=plist1(tactic_genip, empty)
-    { { pt_core = t; pt_intros = ip; } }
+    { mk_core_tactic ~ip t }
 
 %inline tactic_genip:
 | IMPL ip=loc(intro_pattern)+
@@ -3239,7 +3242,7 @@ tactic_chain:
 
 | t=loc(tactic_chain_r) ip=plist1(tactic_genip, empty)
     { let t = mk_loc t.pl_loc (Psubgoal (unloc t)) in
-      { pt_core = t; pt_intros = ip; } }
+      mk_core_tactic ~ip t }
 
 subtactic:
 | t=tactic_chain
@@ -3264,8 +3267,11 @@ toptactic:
 |       t=tactics { t }
 
 tactics_or_prf:
-| t=toptactic  { `Actual t    }
-| p=proof      { `Proof  p    }
+| mode=ID(empty { `Normal } | RIGID { `Rigid }) t=toptactic
+    { `Actual (mode, t) }
+
+| p=proof
+    { `Proof p }
 
 proof:
 | PROOF modes=proofmode1* {

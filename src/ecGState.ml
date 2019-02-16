@@ -67,6 +67,14 @@ let setvalue (name : string) (value : value) (g : gstate) =
   g.gs_values <- Mstr.add name value g.gs_values
 
 (* -------------------------------------------------------------------- *)
+let tmpset (name : string) (flag : bool) (f : 'a -> 'b) (x : 'a) (g : gstate) =
+  let old = getflag name g in
+
+  BatPervasives.finally
+    (fun () -> setflag name old g)
+    (fun x -> setflag name flag g; f x) x
+
+(* -------------------------------------------------------------------- *)
 let add_notifier (notifier : loglevel -> string Lazy.t -> unit) (gs : gstate) =
   let notifier = { nt_id = EcUid.unique (); nt_cb = notifier; } in
   gs.gs_notifiers <- notifier :: gs.gs_notifiers; notifier.nt_id
