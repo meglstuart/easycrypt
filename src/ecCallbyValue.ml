@@ -236,8 +236,10 @@ and app_red st f1 args =
       let op  = oget (EcEnv.Op.by_path_opt p st.st_env) in
       let fix = EcDecl.operator_as_fix op in
 
-        if List.length args <> snd (fix.EcDecl.opf_struct) then
-          raise E.NoCtor;
+      if List.length args < snd (fix.EcDecl.opf_struct) then
+        raise E.NoCtor;
+
+      let args, eargs = List.split_at (snd (fix.EcDecl.opf_struct)) args in
 
       let vargs = Array.of_list args in
       let pargs = List.fold_left (fun (opb, acc) v ->
@@ -280,7 +282,7 @@ and app_red st f1 args =
         EcFol.Fsubst.subst_tvar
           (EcTypes.Tvar.init (List.map fst op.EcDecl.op_tparams) tys) body in
 
-      cbv st subst body (Aempty ty)
+      cbv st subst body (mk_args eargs (Aempty ty))
     with E.NoCtor -> reduce_user st (f_app f1 args ty)
   end
 
