@@ -33,6 +33,10 @@ let while_info env e s =
     | Sif (e, s1, s2) ->
         let r = e_read_r env r e in s_info (s_info (w, r, c) s1) s2
 
+    | Smatch (e, bs) ->
+        let r = e_read_r env r e in
+        List.fold_left (fun st (_, b) -> s_info st b) (w, r, c) bs
+
     | Swhile(e,s) ->
         let r = e_read_r env r e in s_info (w, r, c) s
 
