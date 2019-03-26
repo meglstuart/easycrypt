@@ -239,6 +239,7 @@ let f_int_opp_simpl f =
   | Fapp (op, [f]) when f_equal op fop_int_opp -> f
   | _ -> if f_equal f_i0 f then f_i0 else f_int_opp f
 
+(* -------------------------------------------------------------------- *)
 let f_int_add_simpl =
   let try_add_opp f1 f2 =
     try
@@ -279,9 +280,11 @@ let f_int_add_simpl =
           (fun () -> f_int_add f1 f2)
           (List.Exceptionless.find_map (fun f -> f ()) simpls)
 
+(* -------------------------------------------------------------------- *)
 let f_int_sub_simpl f1 f2 =
   f_int_add_simpl f1 (f_int_opp_simpl f2)
 
+(* -------------------------------------------------------------------- *)
 let f_int_mul_simpl f1 f2 =
   try  f_int (destr_int f1 *^ destr_int f2)
   with DestrError _ ->
@@ -290,6 +293,19 @@ let f_int_mul_simpl f1 f2 =
     else if f_equal f_i1 f2 then f1
     else f_int_mul f1 f2
 
+let f_int_edivz_simpl f1 f2 =
+  if f_equal f2 f_i0 then f_tuple [f_i0; f1]
+  else
+    try
+      let q,r = BI.ediv (destr_int f1) (destr_int f2) in
+      f_tuple [f_int q; f_int r]
+    with DestrError _ ->
+      if f_equal f1 f_i0 then f_tuple [f_i0; f_i0]
+      else if f_equal f2 f_i1 then f_tuple [f1; f_i0]
+      else if f_equal f2 f_im1 then f_tuple [f_int_opp_simpl f1; f_i0]
+      else f_int_edivz f1 f2
+
+(* -------------------------------------------------------------------- *)
 let f_int_edivz_simpl f1 f2 =
   if f_equal f2 f_i0 then f_tuple [f_i0; f1]
   else
