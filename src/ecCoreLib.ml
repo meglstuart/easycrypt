@@ -68,6 +68,8 @@ end
 (* -------------------------------------------------------------------- *)
 module CI_Int = struct
   let i_Int = "Int"
+  let p_Int = EcPath.pqname p_top i_Int
+  let p_int = _Pervasive "int"
 
   let i_IntDiv = "IntDiv"
   let p_IntDiv = EcPath.pqname p_top i_IntDiv
