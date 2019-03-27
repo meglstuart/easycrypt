@@ -75,16 +75,17 @@ let apply_pragma (x : string) =
 module Loader : sig
   type loader
 
-  type kind  = EcLoader.kind
-  type idx_t = EcLoader.idx_t
+  type kind      = EcLoader.kind
+  type idx_t     = EcLoader.idx_t
+  type namespace = EcLoader.namespace
 
   val create  : unit   -> loader
   val forsys  : loader -> loader
   val dup     : loader -> loader
 
-  val addidir : ?system:bool -> ?recursive:bool -> string -> loader -> unit
-  val aslist  : loader -> ((bool * string) * idx_t) list
-  val locate  : ?onlysys:bool -> string -> loader -> (string * kind) option
+  val addidir : ?namespace:namespace -> ?recursive:bool -> string -> loader -> unit
+  val aslist  : loader -> ((namespace option * string) * idx_t) list
+  val locate  : ?namespace:namespace -> string -> loader -> (string * kind) option
 
   val push      : string -> loader -> unit
   val pop       : loader -> string option
@@ -96,8 +97,9 @@ end = struct
     mutable ld_stack : string list;
   }
 
-  type kind  = EcLoader.kind
-  type idx_t = EcLoader.idx_t
+  type kind      = EcLoader.kind
+  type idx_t     = EcLoader.idx_t
+  type namespace = EcLoader.namespace
 
   module Path = BatPathGen.OfString
 
@@ -117,14 +119,14 @@ end = struct
     { ld_core  = EcLoader.dup ld.ld_core;
       ld_stack = ld.ld_stack; }
 
-  let addidir ?system ?recursive (path : string) (ld : loader) =
-    EcLoader.addidir ?system ?recursive path ld.ld_core
+  let addidir ?namespace ?recursive (path : string) (ld : loader) =
+    EcLoader.addidir ?namespace ?recursive path ld.ld_core
 
   let aslist (ld : loader) =
     EcLoader.aslist ld.ld_core
 
-  let locate ?onlysys (path : string) (ld : loader) =
-    EcLoader.locate ?onlysys path ld.ld_core
+  let locate ?namespace (path : string) (ld : loader) =
+    EcLoader.locate ?namespace path ld.ld_core
 
   let push (p : string) (ld : loader) =
     ld.ld_stack <- norm p :: ld.ld_stack
@@ -354,11 +356,12 @@ and process_th_clear (scope : EcScope.scope) clears =
   EcScope.Theory.add_clears clears scope
 
 (* -------------------------------------------------------------------- *)
-and process_th_require1 ld scope (x, io) =
+and process_th_require1 ld scope (nm, x, io) =
   EcScope.check_state `InTop "theory require" scope;
 
   let name  = x.pl_desc in
-    match Loader.locate name ld with
+    let nm = omap (fun x -> `Named (unloc x)) nm in
+    match Loader.locate ?namespace:nm name ld with
     | None ->
         EcScope.hierror "cannot locate theory `%s'" name
 
@@ -392,9 +395,9 @@ and process_th_require1 ld scope (x, io) =
           | Some `Import -> EcScope.Theory.import scope ([], name)
 
 (* -------------------------------------------------------------------- *)
-and process_th_require ld scope (xs, io) =
+and process_th_require ld scope (nm, xs, io) =
   List.fold_left
-    (fun scope x -> process_th_require1 ld scope (x, io))
+    (fun scope x -> process_th_require1 ld scope (nm, x, io))
     scope xs
 
 (* -------------------------------------------------------------------- *)
@@ -608,8 +611,8 @@ and process_internal ld scope g =
 (* -------------------------------------------------------------------- *)
 let loader = Loader.create ()
 
-let addidir ?system ?recursive (idir : string) =
-  Loader.addidir ?system ?recursive idir loader
+let addidir ?namespace ?recursive (idir : string) =
+  Loader.addidir ?namespace ?recursive idir loader
 
 let loadpath () =
   List.map fst (Loader.aslist loader)
@@ -638,9 +641,9 @@ let initial ~checkmode ~boot =
     EcScope.Prover.pl_iterate   = Some (checkmode.cm_iterate);
   } in
 
-  let perv    = (mk_loc _dummy EcCoreLib.i_Pervasive, Some `Export) in
-  let tactics = (mk_loc _dummy "Tactics", Some `Export) in
-  let prelude = (mk_loc _dummy "Logic", Some `Export) in
+  let perv    = (None, mk_loc _dummy EcCoreLib.i_Pervasive, Some `Export) in
+  let tactics = (None, mk_loc _dummy "Tactics", Some `Export) in
+  let prelude = (None, mk_loc _dummy "Logic", Some `Export) in
   let loader  = Loader.forsys loader in
   let gstate  = EcGState.from_flags [("profile", profile)] in
   let scope   = EcScope.empty gstate in
