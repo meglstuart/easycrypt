@@ -214,7 +214,7 @@ lemma cbc_enc_cbc_fold P k iv p:
   cbc_enc P k iv p = cbc_enc_fold P k iv p.
 proof.
   rewrite /cbc_enc_fold /= -(cat0s (cbc_enc P k iv p)).
-  elim p iv []=> //= [iv acc|pi p ih iv acc].
+  elim: p iv []=> //= [iv|pi p ih iv acc].
     by rewrite cats0.
   by rewrite -cat_rcons ih.
 qed.
@@ -231,7 +231,7 @@ lemma cbc_dec_cbc_fold Pi k iv c:
   cbc_dec Pi k iv c = cbc_dec_fold Pi k iv c.
 proof.
   rewrite /cbc_dec_fold /= -(cat0s (cbc_dec Pi k iv c)).
-  elim c iv []=> //= [iv acc|ci c ih iv acc].
+  elim: c iv []=> //= [iv|ci c ih iv acc].
     by rewrite cats0.
   by rewrite -cat_rcons ih.
 qed.
