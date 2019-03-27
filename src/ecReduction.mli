@@ -58,6 +58,9 @@ module User : sig
 end
 
 (* -------------------------------------------------------------------- *)
+val can_eta : ident -> form * form list -> bool
+
+(* -------------------------------------------------------------------- *)
 type reduction_info = {
   beta    : bool;
   delta_p : (path  -> bool); (* None means all *)
