@@ -1851,9 +1851,12 @@ import_flag:
 | IMPORT { `Import }
 | EXPORT { `Export }
 
-theory_require :
-| nm=prefix(FROM, uident)? REQUIRE ip=import_flag? x=uident+
+theory_require:
+| nm=prefix(FROM, uident)? REQUIRE ip=import_flag? x=theory_require_1+
     { (nm, x, ip) }
+
+theory_require_1:
+| x=uident y=prefix(AS, uident)? { (x, y) }
 
 theory_import: IMPORT xs=uqident* { xs }
 theory_export: EXPORT xs=uqident* { xs }

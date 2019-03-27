@@ -356,43 +356,45 @@ and process_th_clear (scope : EcScope.scope) clears =
   EcScope.Theory.add_clears clears scope
 
 (* -------------------------------------------------------------------- *)
-and process_th_require1 ld scope (nm, x, io) =
+and process_th_require1 ld scope (nm, (sysname, thname), io) =
   EcScope.check_state `InTop "theory require" scope;
 
-  let name  = x.pl_desc in
-    let nm = omap (fun x -> `Named (unloc x)) nm in
-    match Loader.locate ?namespace:nm name ld with
-    | None ->
-        EcScope.hierror "cannot locate theory `%s'" name
+  let sysname, thname = (unloc sysname, omap unloc thname) in
+  let thname = odfl sysname thname in
 
-    | Some (filename, kind) ->
-        if Loader.incontext filename ld then
-          EcScope.hierror "circular requires involving `%s'" name;
+  let nm = omap (fun x -> `Named (unloc x)) nm in
+  match Loader.locate ?namespace:nm sysname ld with
+  | None ->
+      EcScope.hierror "cannot locate theory `%s'" sysname
 
-        let dirname = Filename.dirname filename in
-        let subld   = Loader.dup ld in
+  | Some (filename, kind) ->
+      if Loader.incontext filename ld then
+        EcScope.hierror "circular requires involving `%s'" sysname;
 
-        Loader.push    filename subld;
-        Loader.addidir dirname  subld;
+      let dirname = Filename.dirname filename in
+      let subld   = Loader.dup ld in
 
-        let loader iscope =
-          let i_pragma = !pragma in
+      Loader.push    filename subld;
+      Loader.addidir dirname  subld;
 
-          try
-            let commands = EcIo.parseall (EcIo.from_file filename) in
-            let commands = List.fold_left (process_internal subld) iscope commands in
-              pragma := i_pragma; commands
-          with e ->
-            pragma := i_pragma; raise e
-        in
+      let loader iscope =
+        let i_pragma = !pragma in
 
-        let kind = match kind with `Ec -> `Concrete | `EcA -> `Abstract in
+        try
+          let commands = EcIo.parseall (EcIo.from_file filename) in
+          let commands = List.fold_left (process_internal subld) iscope commands in
+            pragma := i_pragma; commands
+        with e ->
+          pragma := i_pragma; raise e
+      in
 
-        let scope = EcScope.Theory.require scope (name, kind) loader in
-          match io with
-          | None         -> scope
-          | Some `Export -> EcScope.Theory.export scope ([], name)
-          | Some `Import -> EcScope.Theory.import scope ([], name)
+      let kind = match kind with `Ec -> `Concrete | `EcA -> `Abstract in
+
+      let scope = EcScope.Theory.require scope (thname, kind) loader in
+        match io with
+        | None         -> scope
+        | Some `Export -> EcScope.Theory.export scope ([], thname)
+        | Some `Import -> EcScope.Theory.import scope ([], thname)
 
 (* -------------------------------------------------------------------- *)
 and process_th_require ld scope (nm, xs, io) =
@@ -641,9 +643,9 @@ let initial ~checkmode ~boot =
     EcScope.Prover.pl_iterate   = Some (checkmode.cm_iterate);
   } in
 
-  let perv    = (None, mk_loc _dummy EcCoreLib.i_Pervasive, Some `Export) in
-  let tactics = (None, mk_loc _dummy "Tactics", Some `Export) in
-  let prelude = (None, mk_loc _dummy "Logic", Some `Export) in
+  let perv    = (None, (mk_loc _dummy EcCoreLib.i_Pervasive, None), Some `Export) in
+  let tactics = (None, (mk_loc _dummy "Tactics", None), Some `Export) in
+  let prelude = (None, (mk_loc _dummy "Logic", None), Some `Export) in
   let loader  = Loader.forsys loader in
   let gstate  = EcGState.from_flags [("profile", profile)] in
   let scope   = EcScope.empty gstate in
