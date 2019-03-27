@@ -134,12 +134,12 @@ let is_Aempty = function Aempty _ -> true | _ -> false
 let is_Aapp   = function Aapp   _ -> true | _ -> false
 
 let mk_args args args' =
-  if List.is_empty args then args' else Aapp(args, args')
+  if List.is_empty args then args' else Aapp (args, args')
 
 let rec get1_args = function
-  | Aempty _ -> assert false
-  | Aapp([], args) -> get1_args args
-  | Aapp(a::args, args') -> a, mk_args args args'
+  | Aempty _ -> None
+  | Aapp ([], args) -> get1_args args
+  | Aapp (a :: args, args') -> Some (a, mk_args args args')
 
 let rec flatten_args = function
   | Aempty ty -> [], ty
@@ -147,6 +147,11 @@ let rec flatten_args = function
   | Aapp(args, args') ->
     let args', ty = flatten_args args' in
     args @ args', ty
+
+let rec args_is_empty = function
+  | Aempty _ -> true
+  | Aapp ([], args) when args_is_empty args  -> true
+  | _ -> false
 
 (* -------------------------------------------------------------------- *)
 let norm_xfun st s f =
@@ -200,17 +205,17 @@ and betared st s bd f args =
 
 (* -------------------------------------------------------------------- *)
 and app_red st f1 args =
-  match f1.f_node, args with
+  match f1.f_node with
   (* β-reduction *)
-  | Fquant (Llambda, bd, f2), _ when st.st_ri.beta ->
-    betared st Subst.subst_id bd f2 args
+  | Fquant (Llambda, bd, f2) when not (args_is_empty args) && st.st_ri.beta ->
+      betared st Subst.subst_id bd f2 args
 
   (* ι-reduction (records projection) *)
-  | Fop (p, _), _ when
+  | Fop (p, _) when
       st.st_ri.iota && EcEnv.Op.is_projection st.st_env p
     -> begin
 
-    let mk, args1 = get1_args args in
+    let mk, args1 = oget (get1_args args) in
 
     match mk.f_node with
     | Fapp ({ f_node = Fop (mkp, _) }, mkargs)
@@ -224,8 +229,8 @@ and app_red st f1 args =
       f_app f1 args ty
   end
 
-  (* fix-def reduction *)
-  | Fop (p, tys), _
+  (* ι-reduction (fix-def reduction) *)
+  | Fop (p, tys)
       when st.st_ri.iota && EcEnv.Op.is_fix_def st.st_env p
     -> begin
     let module E = struct exception NoCtor end in
@@ -362,6 +367,12 @@ and cbv (st : state) (s : subst) (f : form) (args : args) : form =
     | Lexists, _          -> f_exists b f
     | Llambda, _          -> assert false
   end
+
+  | Fquant (Llambda, [x, GTty _], { f_node = Fapp (fn, fnargs) })
+      when st.st_ri.eta && EcReduction.can_eta x (fn, fnargs)
+    ->
+    let rfn = f_app fn (List.take (List.length fnargs - 1) fnargs) f.f_ty in
+    app_red st rfn args
 
   | Fquant (Llambda, b, f1) ->
     betared st s b f1 args

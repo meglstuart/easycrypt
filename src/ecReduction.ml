@@ -536,7 +536,7 @@ let rec h_red_x ri env hyps f =
 
     (* η-reduction *)
   | Fquant (Llambda, [x, GTty _], { f_node = Fapp (fn, args) })
-      when can_eta x (fn, args)
+      when ri.eta && can_eta x (fn, args)
     -> f_app fn (List.take (List.length args - 1) args) f.f_ty
 
   | _ ->
