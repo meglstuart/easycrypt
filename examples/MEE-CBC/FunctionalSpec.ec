@@ -262,7 +262,7 @@ proof.
   elim c st=> //= ci c ih st //=.
   rewrite -lez_add1r /= ler_addl size_ge0 /=.
   rewrite addzC -ih /=.
-  by rewrite ltzNge lez_eqVlt negb_or ltzNge size_ge0 /= if_neg.
+  by rewrite ltzNge lez_eqVlt negb_or ltzNge size_ge0 /= if_neg addzC.
 qed.
 
 lemma size_cbc_enc P k iv p: size (cbc_enc P k iv p) = size p.
