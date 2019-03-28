@@ -369,10 +369,10 @@ and cbv (st : state) (s : subst) (f : form) (args : args) : form =
   end
 
   | Fquant (Llambda, [x, GTty _], { f_node = Fapp (fn, fnargs) })
-      when st.st_ri.eta && EcReduction.can_eta x (fn, fnargs)
+      when st.st_ri.eta && args_is_empty args && EcReduction.can_eta x (fn, fnargs)
     ->
     let rfn = f_app fn (List.take (List.length fnargs - 1) fnargs) f.f_ty in
-    app_red st rfn args
+    cbv st s rfn args
 
   | Fquant (Llambda, b, f1) ->
     betared st s b f1 args
