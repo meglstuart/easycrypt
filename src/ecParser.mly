@@ -1943,7 +1943,11 @@ theory_require:
     { (nm, x, ip) }
 
 theory_require_1:
-| x=uident y=prefix(AS, uident)? { (x, y) }
+| x=uident
+    { (x, None) }
+
+| LBRACKET x=uident AS y=uident RBRACKET
+    { (x, Some y) }
 
 theory_import: IMPORT xs=uqident* { xs }
 theory_export: EXPORT xs=uqident* { xs }

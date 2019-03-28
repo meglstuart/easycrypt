@@ -208,10 +208,6 @@ let main () =
     EcCommands.addidir ~namespace:`System (Filename.concat theories "prelude");
     if not ldropts.ldro_boot then
       EcCommands.addidir ~namespace:`System ~recursive:true theories;
-    List.iter (fun (onm, x) ->
-        Printf.printf "%s / %s\n" (oget onm) x;
-        EcCommands.addidir ?namespace:(omap (fun nm -> `Named nm) onm) x)
-      ldropts.ldro_idirs;
   end;
 
   (* Register user messages printers *)
