@@ -103,7 +103,7 @@ let check_case idir name (dev, ino) =
     with Unix.Unix_error _ -> false
 
 (* -------------------------------------------------------------------- *)
-let locate ?namespace (name : string) (ecl : ecloader) =
+let locate ?(namespaces = [None]) (name : string) (ecl : ecloader) =
   if not (EcRegexp.match_ (`S "^[a-zA-Z0-9_]+$") name) then
     None
   else
@@ -115,11 +115,12 @@ let locate ?namespace (name : string) (ecl : ecloader) =
       in
 
       let nmok =
-        match namespace, inamespace with
-        | Some nm, Some inm -> nm = inm
-        | None   , (None | Some `System) -> true
-        | _      , _                     -> false in
-
+        let for1 namespace =
+          match namespace, inamespace with
+          | Some nm, Some inm -> nm = inm
+          | None   , (None | Some `System) -> true
+          | _      , _                     -> false
+        in List.exists for1 namespaces in
 
       if not nmok then None else
 
@@ -139,7 +140,7 @@ let locate ?namespace (name : string) (ecl : ecloader) =
           let stat = (stat.Unix.st_dev, stat.Unix.st_ino) in
             if   not (check_case idir name stat)
             then None
-            else Some (Filename.concat idir name, kind)
+            else Some (inamespace, Filename.concat idir name, kind)
     in
 
     match

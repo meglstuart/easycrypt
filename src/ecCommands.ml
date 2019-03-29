@@ -122,11 +122,14 @@ module Loader : sig
 
   val create  : unit   -> loader
   val forsys  : loader -> loader
-  val dup     : loader -> loader
+  val dup     : ?namespace:EcLoader.namespace -> loader -> loader
+
+  val namespace : loader -> EcLoader.namespace option
 
   val addidir : ?namespace:namespace -> ?recursive:bool -> string -> loader -> unit
   val aslist  : loader -> ((namespace option * string) * idx_t) list
-  val locate  : ?namespace:namespace -> string -> loader -> (string * kind) option
+  val locate  : ?namespaces:namespace option list -> string ->
+                  loader -> (namespace option * string * kind) option
 
   val push      : string -> loader -> unit
   val pop       : loader -> string option
@@ -134,8 +137,9 @@ module Loader : sig
   val incontext : string -> loader -> bool
 end = struct
   type loader = {
-    (*---*) ld_core  : EcLoader.ecloader;
-    mutable ld_stack : string list;
+    (*---*) ld_core      : EcLoader.ecloader;
+    mutable ld_stack     : string list;
+    (*---*) ld_namespace : EcLoader.namespace option;
   }
 
   type kind      = EcLoader.kind
@@ -149,16 +153,24 @@ end = struct
     with Path.Malformed_path -> p
 
   let create () =
-    { ld_core  = EcLoader.create ();
-      ld_stack = []; }
+    { ld_core      = EcLoader.create ();
+      ld_stack     = [];
+      ld_namespace = None; }
 
   let forsys (ld : loader) =
-    { ld_core  = EcLoader.forsys ld.ld_core;
-      ld_stack = ld.ld_stack; }
+    { ld_core      = EcLoader.forsys ld.ld_core;
+      ld_stack     = ld.ld_stack;
+      ld_namespace = None; }
 
-  let dup (ld : loader) =
-    { ld_core  = EcLoader.dup ld.ld_core;
-      ld_stack = ld.ld_stack; }
+  let dup ?namespace (ld : loader) =
+    { ld_core      = EcLoader.dup ld.ld_core;
+      ld_stack     = ld.ld_stack;
+      ld_namespace =
+        match namespace with
+        | Some _ -> namespace
+        | None   -> ld.ld_namespace; }
+
+  let namespace { ld_namespace = nm } = nm
 
   let addidir ?namespace ?recursive (path : string) (ld : loader) =
     EcLoader.addidir ?namespace ?recursive path ld.ld_core
@@ -166,8 +178,8 @@ end = struct
   let aslist (ld : loader) =
     EcLoader.aslist ld.ld_core
 
-  let locate ?namespace (path : string) (ld : loader) =
-    EcLoader.locate ?namespace path ld.ld_core
+  let locate ?namespaces (path : string) (ld : loader) =
+    EcLoader.locate ?namespaces path ld.ld_core
 
   let push (p : string) (ld : loader) =
     ld.ld_stack <- norm p :: ld.ld_stack
@@ -405,19 +417,24 @@ and process_th_require1 ld scope (nm, (sysname, thname), io) =
   let thname = odfl sysname thname in
 
   let nm = omap (fun x -> `Named (unloc x)) nm in
-  match Loader.locate ?namespace:nm sysname ld with
+  let nm =
+    if   is_none nm && is_some (Loader.namespace ld)
+    then [Loader.namespace ld; None]
+    else [nm] in
+
+  match Loader.locate ~namespaces:nm sysname ld with
   | None ->
       EcScope.hierror "cannot locate theory `%s'" sysname
 
-  | Some (filename, kind) ->
+  | Some (fnm, filename, kind) ->
       if Loader.incontext filename ld then
         EcScope.hierror "circular requires involving `%s'" sysname;
 
       let dirname = Filename.dirname filename in
-      let subld   = Loader.dup ld in
+      let subld   = Loader.dup ?namespace:fnm ld in
 
       Loader.push    filename subld;
-      Loader.addidir dirname  subld;
+      Loader.addidir ?namespace:fnm dirname subld;
 
       let loader iscope =
         let i_pragma = Pragma.get () in
