@@ -1371,7 +1371,7 @@ module Reduction = struct
   type rule   = EcTheory.rule
   type topsym = red_topsym
 
-  let add_rule (idx : int) ((_, rule) : path * rule option) (db : mredinfo) =
+  let add_rule ((_, rule) : path * rule option) (db : mredinfo) =
     match rule with None -> db | Some rule ->
 
     let p =
@@ -1388,23 +1388,23 @@ module Reduction = struct
 
       let ri_priomap =
         let change prules = Some (odfl [] prules @ [rule]) in
-        Mint.change change idx ri_priomap in
+        Mint.change change (abs rule.rl_prio) ri_priomap in
 
       let ri_list =
         Lazy.from_fun (fun () -> List.flatten (Mint.values ri_priomap)) in
 
       Some { ri_priomap; ri_list }) p db
 
-  let add_rules (rules : (int * (path * rule option)) list) (db : mredinfo) =
-    List.fold_left ((^~) (curry add_rule)) db rules
+  let add_rules (rules : (path * rule option) list) (db : mredinfo) =
+    List.fold_left ((^~) add_rule) db rules
 
-  let add (rules : (int * (path * rule option)) list) (env : env) =
+  let add (rules : (path * rule option) list) (env : env) =
     { env with
         env_redbase = add_rules rules env.env_redbase;
         env_item    = CTh_reduction rules :: env.env_item; }
 
-  let add1 ?(idx = 0) (prule : path * rule option) (env : env) =
-    add [(idx, prule)] env
+  let add1 (prule : path * rule option) (env : env) =
+    add [prule] env
 
   let get (p : topsym) (env : env) =
     Mrd.find_opt p env.env_redbase

@@ -341,7 +341,7 @@ and reduce_user st f =
   | exception NotReducible ->
     (* Try user reduction *)
     let cbv = cbv_init st Subst.subst_id in
-    match reduce_user_gen cbv st.st_ri st.st_env st.st_hyps f with
+    match reduce_user_gen `All cbv st.st_ri st.st_env st.st_hyps f with
     | f -> cbv_init st Subst.subst_id f
     | exception NotReducible -> f
 

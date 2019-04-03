@@ -3402,7 +3402,7 @@ user_red_info:
 | x=qident i=prefix(AT, word)?
     { ([x], i) }
 
-| xs=paren(plist1(qident, COMMA)) i=prefix(AT, word)?
+| xs=paren(plist1(qident, COMMA)) i=prefix(AT, sword)?
     { (xs, i) }
 
 (* -------------------------------------------------------------------- *)
