@@ -3415,6 +3415,19 @@ hint:
         ht_base  = base ; ht_names = l; } }
 
 (* -------------------------------------------------------------------- *)
+(* User reduction                                                       *)
+reduction:
+| HINT SIMPLIFY xs=plist1(user_red_info, COMMA)
+    { xs }
+
+user_red_info:
+| x=qident i=prefix(AT, word)?
+    { ([x], i) }
+
+| xs=paren(plist1(qident, COMMA)) i=prefix(AT, sword)?
+    { (xs, i) }
+
+(* -------------------------------------------------------------------- *)
 (* Search pattern                                                       *)
 %inline search: x=sform_h { x }
 

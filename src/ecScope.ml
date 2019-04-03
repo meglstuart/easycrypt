@@ -774,43 +774,6 @@ module Tactics = struct
 end
 
 (* -------------------------------------------------------------------- *)
-module Auto = struct
-  let add_rw scope ~local ~base l =
-    let env = env scope in
-
-    if local then
-      hierror "rewrite hints cannot be local";
-
-    let env, base =
-      match EcEnv.BaseRw.lookup_opt base.pl_desc env with
-      | None ->
-        let pre, ibase = unloc base in
-        if not (List.is_empty pre) then
-          hierror ~loc:base.pl_loc
-            "cannot create rewrite hints out of its enclosing theory";
-        let env = EcEnv.BaseRw.add ibase env in
-        (env, fst (EcEnv.BaseRw.lookup base.pl_desc env))
-
-      | Some (base, _) -> (env, base) in
-
-    let l = List.map (fun l -> EcEnv.Ax.lookup_path (unloc l) env) l in
-    { scope with sc_env = EcEnv.BaseRw.addto base l env }
-
-  let bind_hint scope ~local ~level ?base names =
-    { scope with sc_env =
-        EcEnv.Auto.add ~local ~level ?base names scope.sc_env }
-
-  let add_hint scope hint =
-    let base = omap unloc hint.ht_base in
-
-    let names = List.map
-      (fun l -> EcEnv.Ax.lookup_path (unloc l) scope.sc_env)
-      hint.ht_names in
-
-    bind_hint scope ~local:hint.ht_local ~level:hint.ht_prio ?base names
-end
-
-(* -------------------------------------------------------------------- *)
 module Ax = struct
   open EcParsetree
   open EcDecl
@@ -2172,6 +2135,64 @@ module Section = struct
         in
 
         List.fold_left bind1 scope oitems
+end
+
+(* -------------------------------------------------------------------- *)
+module Auto = struct
+  let addrw scope ~local ~base l =
+    let env = env scope in
+
+    if local then
+      hierror "rewrite hints cannot be local";
+
+    let env, base =
+      match EcEnv.BaseRw.lookup_opt base.pl_desc env with
+      | None ->
+        let pre, ibase = unloc base in
+        if not (List.is_empty pre) then
+          hierror ~loc:base.pl_loc
+            "cannot create rewrite hints out of its enclosing theory";
+        let env = EcEnv.BaseRw.add ibase env in
+        (env, fst (EcEnv.BaseRw.lookup base.pl_desc env))
+
+      | Some (base, _) -> (env, base) in
+
+    let l = List.map (fun l -> EcEnv.Ax.lookup_path (unloc l) env) l in
+    { scope with sc_env = EcEnv.BaseRw.addto base l env }
+
+  let addhint scope hint =
+    let base = omap unloc hint.ht_base in
+
+    let names = List.map
+      (fun l -> EcEnv.Ax.lookup_path (unloc l) scope.sc_env)
+      hint.ht_names in
+
+    { scope with sc_env =
+        EcEnv.Auto.add
+          ~local:hint.ht_local ~level:hint.ht_prio ?base
+          names scope.sc_env }
+end
+
+(* -------------------------------------------------------------------- *)
+module Reduction = struct
+  let add_reduction scope reds =
+    check_state `InTop "hint simplify" scope;
+    if EcSection.in_section scope.sc_section then
+      hierror "cannot add reduction rule in a section";
+
+    let rules =
+      let for1 idx name =
+        let idx      = odfl 0 idx in
+        let lemma    = fst (EcEnv.Ax.lookup (unloc name) (env scope)) in
+        let red_info = EcReduction.User.compile ~prio:idx (env scope) lemma in
+        (lemma, Some red_info) in
+
+      let rules = List.map (fun (xs, idx) -> List.map (for1 idx) xs) reds in
+      List.flatten rules
+
+    in
+
+    { scope with sc_env = EcEnv.Reduction.add rules (env scope) }
 end
 
 (* -------------------------------------------------------------------- *)
