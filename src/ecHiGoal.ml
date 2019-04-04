@@ -1186,7 +1186,7 @@ let rec process_mintros_1 ?(cf = true) ttenv pis gs =
            (fun tc -> t_elim_iso_or ~reduce:red tc))
         else
           ((fun tc -> ([2]   , t_elim_and ~reduce:red tc)),
-           (fun tc -> ([1; 1], t_elim_and ~reduce:red tc))) in
+           (fun tc -> ([1; 1], t_elim_or  ~reduce:red tc))) in
 
       fun tc -> FApi.t_or_map [t_and; t_or] tc
     in
@@ -1202,41 +1202,32 @@ let rec process_mintros_1 ?(cf = true) ttenv pis gs =
     in
 
     let doit tc =
-      let togen = ref [] in
+      let rec aux imax tc =
+        if imax = Some 0 then t_id tc else
 
-      let rec aux isbnd tc =
         try
           let ntop, tc = t_case tc in
+
           FApi.t_sublasts
-            (List.map (fun i tc ->
-                 let tt, tc = t_onall (aux isbnd), FApi.tcenv_of_tcenv1 tc in
-                 EcUtils.iterop tt i tc)
-               ntop)
+            (List.map (fun i tc -> aux (omap ((+) (i-1)) imax) tc) ntop)
             tc
         with InvalidGoalShape ->
           let id = EcIdent.create "_" in
           try
-            let tc = EcLowGoal.t_intros_i [id] tc in
-            togen := id :: !togen; tc
-          with EcCoreGoal.TcError _ ->
-            if isbnd then
-              tc_error !!tc "not enough top-assumptions";
-            raise (E.IterDone (FApi.tcenv_of_tcenv1 tc))
+            t_seq
+              (aux (omap ((+) (-1)) imax))
+              (t_generalize_hyps ~clear:`Yes [id])
+              (EcLowGoal.t_intros_i_1 [id] tc)
+          with
+          | EcCoreGoal.TcError _ when EcUtils.is_some imax ->
+              tc_error !!tc "not enough top-assumptions"
+          | EcCoreGoal.TcError _ ->
+              t_id tc
       in
 
-      let tc = FApi.tcenv_of_tcenv1 tc in
-
-      let tc =
-        match cnt with
-        | `AtMost cnt ->
-             EcUtils.iterop (t_onall (aux true)) (max 0 cnt) tc
-        | `AsMuch ->
-             try  EcUtils.iter (t_onall (aux false)) tc
-             with E.IterDone tc -> tc
-
-      in t_onall
-           (t_generalize_hyps ~clear:`Yes ~missing:true (List.rev !togen))
-           tc
+      match cnt with
+      | `AtMost cnt -> aux (Some (max 1 cnt)) tc
+      | `AsMuch     -> aux None tc
     in
 
     if List.is_empty pis then doit tc else onsub (doit tc)
