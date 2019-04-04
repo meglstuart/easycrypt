@@ -1174,15 +1174,21 @@ let rec process_mintros_1 ?(cf = true) ttenv pis gs =
   and intro1_full_case (st : ST.state)
     ((prind, delta), (cnt : icasemode_full option)) pis tc
   =
-    let module E = struct exception IterDone of tcenv1 end in
+    let module E = struct exception IterDone of tcenv end in
 
     let cnt = cnt |> odfl (`AtMost 1) in
     let red = if delta then `Full else `NoDelta in
 
-    let t_and =
-      if prind then
-        t_elim_iso_and ~reduce:red
-      else (fun tc -> (2, t_elim_and ~reduce:red tc))
+    let t_case =
+      let t_and, t_or =
+        if prind then
+          ((fun tc -> fst_map List.singleton (t_elim_iso_and ~reduce:red tc)),
+           (fun tc -> t_elim_iso_or ~reduce:red tc))
+        else
+          ((fun tc -> ([2]   , t_elim_and ~reduce:red tc)),
+           (fun tc -> ([1; 1], t_elim_and ~reduce:red tc))) in
+
+      fun tc -> FApi.t_or_map [t_and; t_or] tc
     in
 
     let onsub gs =
@@ -1200,27 +1206,37 @@ let rec process_mintros_1 ?(cf = true) ttenv pis gs =
 
       let rec aux isbnd tc =
         try
-          let ntop, tc = snd_map FApi.as_tcenv1 (t_and tc) in
-          EcUtils.iterop (aux isbnd) ntop tc
+          let ntop, tc = t_case tc in
+          FApi.t_sublasts
+            (List.map (fun i tc ->
+                 let tt, tc = t_onall (aux isbnd), FApi.tcenv_of_tcenv1 tc in
+                 EcUtils.iterop tt i tc)
+               ntop)
+            tc
         with InvalidGoalShape ->
           let id = EcIdent.create "_" in
           try
-            let tc = EcLowGoal.t_intros_i_1 [id] tc in
-            togen := id :: !togen;  tc
+            let tc = EcLowGoal.t_intros_i [id] tc in
+            togen := id :: !togen; tc
           with EcCoreGoal.TcError _ ->
             if isbnd then
               tc_error !!tc "not enough top-assumptions";
-            raise (E.IterDone tc)
+            raise (E.IterDone (FApi.tcenv_of_tcenv1 tc))
       in
+
+      let tc = FApi.tcenv_of_tcenv1 tc in
 
       let tc =
         match cnt with
         | `AtMost cnt ->
-           EcUtils.iterop (aux true) (max 0 cnt) tc
+             EcUtils.iterop (t_onall (aux true)) (max 0 cnt) tc
         | `AsMuch ->
-           try EcUtils.iter (aux false) tc with E.IterDone tc -> tc
+             try  EcUtils.iter (t_onall (aux false)) tc
+             with E.IterDone tc -> tc
 
-      in t_generalize_hyps ~clear:`Yes ~missing:true (List.rev !togen) tc
+      in t_onall
+           (t_generalize_hyps ~clear:`Yes ~missing:true (List.rev !togen))
+           tc
     in
 
     if List.is_empty pis then doit tc else onsub (doit tc)
