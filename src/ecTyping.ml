@@ -1101,7 +1101,11 @@ let transexp (env : EcEnv.env) mode ue e =
         let (_, ety) as aout = transexp env pe in
         unify_or_fail env ue pe.pl_loc ~expct:ty ety; aout
 
-    | PEint i -> (e_int i, tint)
+    | PEint i ->
+        (e_int i, tint)
+
+    | PEdecimal (n, f) ->
+        (e_decimal (n, f), treal)
 
     | PEident ({ pl_desc = name }, tvi) ->
         let tvi = tvi |> omap (transtvi env ue) in
@@ -2164,6 +2168,9 @@ let trans_form_or_pattern env (ps, ue) pf tt =
 
     | PFint n ->
         f_int n
+
+    | PFdecimal (n, f) ->
+        f_decimal (n, f)
 
     | PFtuple args -> begin
         let args = List.map (transf env) args in

@@ -353,6 +353,7 @@
 %token <EcSymbols.symbol> PBINOP
 
 %token <EcBigInt.zint> UINT
+%token <EcBigInt.zint * (int * EcBigInt.zint)> DECIMAL
 %token <string> STRING
 
 (* Tokens *)
@@ -862,6 +863,9 @@ sexpr_u:
 | n=uint
    { PEint n }
 
+| d=DECIMAL
+   { PEdecimal d }
+
 | x=qoident ti=tvars_app?
    { PEident (x, ti) }
 
@@ -1044,6 +1048,9 @@ sform_u(P):
 
 | n=uint
    { PFint n }
+
+| d=DECIMAL
+   { PFdecimal d }
 
 | x=loc(RES)
    { PFident (mk_loc x.pl_loc ([], "res"), None) }
