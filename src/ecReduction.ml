@@ -251,9 +251,8 @@ module User = struct
 
   type rule = EcEnv.Reduction.rule
 
-  let compile ~prio (env : EcEnv.env) (p : EcPath.path) =
-    let ax = EcEnv.Ax.by_path p env in
-    let bds, rl = EcFol.decompose_forall ax.EcDecl.ax_spec in
+  let compile ~prio (env : EcEnv.env) ((tparams, ax) : EcDecl.ty_params * form) =
+    let bds, rl = EcFol.decompose_forall ax in
 
     let bds =
       let filter = function
@@ -311,7 +310,7 @@ module User = struct
     let mvars   =
       Sid.diff (Sid.of_list (List.map fst bds)) lvars in
     let mtyvars =
-      Sid.diff (Sid.of_list (List.map fst ax.EcDecl.ax_tparams)) ltyvars in
+      Sid.diff (Sid.of_list (List.map fst tparams)) ltyvars in
 
     if not (Sid.is_empty mvars) then
       raise (InvalidUserRule (MissingVarInLhs (Sid.choose mvars)));
@@ -322,13 +321,16 @@ module User = struct
     | R.Var _ -> raise (InvalidUserRule (HeadedByVar));
     | _       -> () end;
 
-    R.{ rl_tyd  = ax.EcDecl.ax_tparams;
+    R.{ rl_tyd  = tparams;
         rl_vars = bds;
         rl_cond = conds;
         rl_ptn  = rule;
         rl_tg   = rhs;
         rl_prio = prio; }
 
+  let compile_from_path ~prio (env : EcEnv.env) (p : EcPath.path) =
+    let ax = EcEnv.Ax.by_path p env in
+    compile ~prio env (ax.EcDecl.ax_tparams, ax.EcDecl.ax_spec)
 end
 
 (* -------------------------------------------------------------------- *)
@@ -666,8 +668,7 @@ and reduce_context ri env hyps f =
 
   | _ -> raise NotReducible
 
-and reduce_user_gen mode simplify ri env hyps f
-=
+and reduce_user_gen mode simplify ri env hyps f =
   if not ri.user then raise NotReducible;
 
   let p =
@@ -676,7 +677,17 @@ and reduce_user_gen mode simplify ri env hyps f
     | Ftuple _   -> `Tuple
     | _ -> raise NotReducible in
 
-  let rules = EcEnv.Reduction.get p env in
+  let grules = EcEnv.Reduction.get p env in
+  let lrules =
+    let rule_of_hyp = function
+      | _, EcBaseLogic.LD_hyp h -> begin
+          try  Some (User.compile ~prio:0 env ([], h))
+          with User.InvalidUserRule _ -> None
+        end
+      | _ -> None
+    in List.pmap rule_of_hyp (LDecl.tohyps hyps).EcBaseLogic.h_local in
+
+  let rules = lrules @ grules in
 
   let module R = EcTheory in
 

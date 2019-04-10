@@ -435,7 +435,7 @@ and replay_reduction
     let rule =
       obind (fun rule ->
         try
-          Some (EcReduction.User.compile
+          Some (EcReduction.User.compile_from_path
                   ~prio:rule.rl_prio (ove.ovre_hooks.henv scope) p)
         with EcReduction.User.InvalidUserRule _ -> None) rule
 

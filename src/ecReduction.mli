@@ -54,7 +54,8 @@ module User : sig
 
   type rule = EcEnv.Reduction.rule
 
-  val compile : prio:int -> EcEnv.env -> EcPath.path -> rule
+  val compile_from_path : prio:int -> EcEnv.env -> EcPath.path -> rule
+  val compile : prio:int -> EcEnv.env -> EcDecl.ty_params * EcFol.form -> rule
 end
 
 (* -------------------------------------------------------------------- *)

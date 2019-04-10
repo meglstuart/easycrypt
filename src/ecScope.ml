@@ -2123,7 +2123,7 @@ module Reduction = struct
       let for1 idx name =
         let idx      = odfl 0 idx in
         let lemma    = fst (EcEnv.Ax.lookup (unloc name) (env scope)) in
-        let red_info = EcReduction.User.compile ~prio:idx (env scope) lemma in
+        let red_info = EcReduction.User.compile_from_path ~prio:idx (env scope) lemma in
         (lemma, Some red_info) in
 
       let rules = List.map (fun (xs, idx) -> List.map (for1 idx) xs) reds in
