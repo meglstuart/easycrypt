@@ -82,6 +82,7 @@ and pexpr_r =
   | PElet     of plpattern * pexpr_wty * pexpr     (* let binding        *)
   | PEtuple   of pexpr list                        (* tuple constructor  *)
   | PEif      of pexpr * pexpr * pexpr             (* _ ? _ : _          *)
+  | PEmatch   of pexpr * (ppattern * pexpr) list   (* match              *)
   | PEforall  of ptybindings * pexpr               (* forall quant.      *)
   | PEexists  of ptybindings * pexpr               (* exists quant.      *)
   | PElambda  of ptybindings * pexpr               (* lambda abstraction *)
