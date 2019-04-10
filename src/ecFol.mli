@@ -56,6 +56,7 @@ val f_real_mul : form -> form -> form
 val f_real_inv : form -> form
 val f_real_div : form -> form -> form
 val f_real_abs : form -> form
+val f_decimal  : zint * (int * zint) -> form
 
 (* soft-constructor - map *)
 val f_map_cst : EcTypes.ty -> form -> form
