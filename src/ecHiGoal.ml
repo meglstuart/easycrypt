@@ -128,6 +128,7 @@ let process_simplify ri (tc : tcenv1) =
     EcReduction.eta     = ri.peta;
     EcReduction.logic   = if ri.plogic then Some `Full else None;
     EcReduction.modpath = ri.pmodpath;
+    EcReduction.user    = ri.puser;
   } in
 
     t_simplify_with_info ri tc

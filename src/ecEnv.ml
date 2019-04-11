@@ -128,6 +128,20 @@ type env_norm = {
 }
 
 (* -------------------------------------------------------------------- *)
+type red_topsym = [ `Path of path | `Tuple ]
+
+module Mrd = EcMaps.Map.Make(struct
+  type t = red_topsym
+
+  let compare (p1 : t) (p2 : t) =
+    match p1, p2 with
+    | `Path p1, `Path p2 ->  EcPath.p_compare p1 p2
+    | `Tuple  , `Tuple   ->  0
+    | `Tuple  , `Path _  -> -1
+    | `Path _ , `Tuple   ->  1
+end)
+
+(* -------------------------------------------------------------------- *)
 type preenv = {
   env_top      : EcPath.path option;
   env_gstate   : EcGState.gstate;
@@ -142,6 +156,7 @@ type preenv = {
   env_tc       : TC.graph;
   env_rwbase   : Sp.t Mip.t;
   env_atbase   : (path list Mint.t) Msym.t;
+  env_redbase  : mredinfo;
   env_ntbase   : (path * env_notation) list;
   env_modlcs   : Sid.t;                 (* declared modules *)
   env_item     : ctheory_item list;     (* in reverse order *)
@@ -160,6 +175,12 @@ and tcinstance = [
   | `Field   of EcDecl.field
   | `General of EcPath.path
 ]
+
+and redinfo =
+  { ri_priomap : (EcTheory.rule list) Mint.t;
+    ri_list    : (EcTheory.rule list) Lazy.t; }
+
+and mredinfo = redinfo Mrd.t
 
 and env_notation = ty_params * EcDecl.notation
 
@@ -245,6 +266,7 @@ let empty gstate =
     env_tc       = TC.Graph.empty;
     env_rwbase   = Mip.empty;
     env_atbase   = Msym.empty;
+    env_redbase  = Mrd.empty;
     env_ntbase   = [];
     env_modlcs   = Sid.empty;
     env_item     = [];
@@ -1035,7 +1057,8 @@ module MC = struct
       | CTh_baserw x ->
           (add2mc _up_rwbase x (expath x) mc, None)
 
-      | CTh_export _ | CTh_addrw _ | CTh_instance _ | CTh_auto _ ->
+      | CTh_export _ | CTh_addrw _ | CTh_instance _
+      | CTh_auto   _ | CTh_reduction _ ->
           (mc, None)
     in
 
@@ -2747,6 +2770,7 @@ module Theory = struct
     | Th_instance  (ty, cr) -> CTh_instance  (ty, cr)
     | Th_baserw    x        -> CTh_baserw x
     | Th_addrw     (b, l)   -> CTh_addrw     (b, l)
+    | Th_reduction rule     -> CTh_reduction rule
     | Th_auto      ps       -> CTh_auto      ps
 
     | Th_theory (x, (th, md)) ->
@@ -2942,7 +2966,7 @@ module Theory = struct
         | CTh_baserw x ->
             MC.import_rwbase (xpath x) env
 
-        | CTh_addrw _ | CTh_instance _ | CTh_auto _ ->
+        | CTh_addrw _ | CTh_instance _ | CTh_auto _ | CTh_reduction _ ->
             env
 
       in

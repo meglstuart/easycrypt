@@ -566,6 +566,9 @@ and replay1 (ove : _ ovrenv) (subst, ops, proofs, scope) item =
   | CTh_addrw (p, l) ->
      replay_addrw ove (subst, ops, proofs, scope) (p, l)
 
+  | CTh_reduction rule ->
+     replay_reduction ove (subst, ops, proofs, scope) rule
+
   | CTh_auto (lc, lvl, base, ps) ->
      replay_auto ove (subst, ops, proofs, scope) (lc, lvl, base, ps)
 

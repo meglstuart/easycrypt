@@ -102,7 +102,7 @@
       { pbeta  = true; pzeta  = true;
         piota  = true; peta   = true;
         plogic = true; pdelta = None;
-        pmodpath = true }
+        pmodpath = true; puser = true; }
     else
       let doarg acc = function
         | `Delta l ->
@@ -116,14 +116,15 @@
         | `Eta     -> { acc with peta     = true }
         | `Logic   -> { acc with plogic   = true }
         | `ModPath -> { acc with pmodpath = true }
+        | `User    -> { acc with puser    = true }
       in
         List.fold_left doarg
           { pbeta  = false; pzeta  = false;
             piota  = false; peta   = false;
             plogic = false; pdelta = Some [];
-            pmodpath = false } l
+            pmodpath = false; puser = false; } l
 
-  let simplify_red = [`Zeta; `Iota; `Beta; `Eta; `Logic; `ModPath]
+  let simplify_red = [`Zeta; `Iota; `Beta; `Eta; `Logic; `ModPath; `User]
 
   let mk_pterm explicit head args =
     { fp_mode = if explicit then `Explicit else `Implicit;
@@ -3454,6 +3455,7 @@ global_action:
 | predicate        { Gpredicate   $1 }
 | notation         { Gnotation    $1 }
 | abbreviation     { Gabbrev      $1 }
+| reduction        { Greduction   $1 }
 | axiom            { Gaxiom       $1 }
 | tactics_or_prf   { Gtactics     $1 }
 | tactic_dump      { Gtcdump      $1 }

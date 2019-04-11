@@ -71,6 +71,7 @@ type reduction_info = {
   eta     : bool;            (* reduce eta-expansion *)
   logic   : rlogic_info;     (* perform logical simplification *)
   modpath : bool;            (* reduce module path *)
+  user    : bool             (* reduce user defined rules *)
 }
 
 and rlogic_info = [`Full | `ProductCompat] option

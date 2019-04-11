@@ -395,6 +395,7 @@ type preduction = {
   peta     : bool;                      (* η-reduction *)
   plogic   : bool;                      (* logical simplification *)
   pmodpath : bool;                      (* modpath normalization *)
+  puser    : bool;                      (* user reduction *)
 }
 
 (* -------------------------------------------------------------------- *)
@@ -1038,6 +1039,9 @@ type phint = {
 }
 
 (* -------------------------------------------------------------------- *)
+type puserred = (pqsymbol list * int option) list
+
+(* -------------------------------------------------------------------- *)
 type global_action =
   | Gdeclare     of pdeclare
   | Gmodule      of pmodule_def
@@ -1051,6 +1055,7 @@ type global_action =
   | Gtypeclass   of ptypeclass
   | Gtycinstance of ptycinstance
   | Gaddrw       of (bool * pqsymbol * pqsymbol list)
+  | Greduction   of puserred
   | Ghint        of phint
   | Gprint       of pprint
   | Gsearch      of pformula list
