@@ -3403,15 +3403,15 @@ gprover_info:
     { { empty_pprover with pprov_cpufactor = Some t; } }
 
 addrw:
-| local=boption(LOCAL) HINT REWRITE p=lqident COLON l=lqident*
+| local=iboption(LOCAL) HINT REWRITE p=lqident COLON l=lqident*
     { (local, p, l) }
 
 hint:
-| local=boption(LOCAL) HINT EXACT base=lident? COLON l=qident*
+| local=iboption(LOCAL) HINT EXACT base=lident? COLON l=qident*
     { { ht_local = local; ht_prio  = 0;
         ht_base  = base ; ht_names = l; } }
 
-| local=boption(LOCAL) HINT SOLVE i=word base=lident? COLON l=qident*
+| local=iboption(LOCAL) HINT SOLVE i=word base=lident? COLON l=qident*
     { { ht_local = local; ht_prio  = i;
         ht_base  = base ; ht_names = l; } }
 
