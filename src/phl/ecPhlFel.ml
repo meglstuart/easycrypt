@@ -112,6 +112,7 @@ and callable_oracles_i env modv os i =
     | Sasgn _ | Srnd _ | Sassert _ -> os
 
     | Sabstract _ -> assert false (* FIXME *)
+    | Scost s     -> assert false                             (* TODO : FIXME *)
 
 let callable_oracles_stmt env modv =
   callable_oracles_s env modv EcPath.Sx.empty

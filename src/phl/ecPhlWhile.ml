@@ -54,6 +54,8 @@ let while_info env e s =
       let c = List.fold_left (fun c f -> Sx.add f c) c us.EcModules.aus_calls in
       (w, r, c)
 
+    | Scost s -> assert false                                 (* TODO : FIXME *)
+
   and s_info info s = List.fold_left i_info info s.s_node in
 
   let (w,r,c) = s_info (PV.empty, EcPV.e_read env e, Sx.empty) s in
