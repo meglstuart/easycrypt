@@ -91,6 +91,7 @@ and instr_node =
   | Swhile    of EcTypes.expr * stmt
   | Sassert   of EcTypes.expr
   | Sabstract of EcIdent.t
+  | Scost     of stmt
 
 and stmt = {
   s_node : instr list;
@@ -141,6 +142,8 @@ module Hinstr = Why3.Hashcons.Make (struct
 
     | Sabstract id1, Sabstract id2 -> EcIdent.id_equal id1 id2
 
+    | Scost s1, Scost s2 -> (s_equal s1 s2)                   (* TODO : FIXME *)
+
     | _, _ -> false
 
   let equal i1 i2 = equal_node i1.i_node i2.i_node
@@ -172,6 +175,8 @@ module Hinstr = Why3.Hashcons.Make (struct
 
     | Sabstract id -> EcIdent.id_hash id
 
+    | Scost s -> (s_hash s)                                   (* TODO : FIXME *)
+
   let i_fv   = function
     | Sasgn (lv, e) ->
         EcIdent.fv_union (lv_fv lv) (EcTypes.e_fv e)
@@ -198,6 +203,9 @@ module Hinstr = Why3.Hashcons.Make (struct
 
     | Sabstract id ->
         EcIdent.fv_singleton id
+
+    | Scost s ->
+      s_fv s                                                  (* TODO : FIXME *)
 
   let tag n p = { p with i_tag = n; i_fv = i_fv p.i_node }
 end)
@@ -245,6 +253,7 @@ let i_if       (c, s1, s2)  = mk_instr (Sif (c, s1, s2))
 let i_while    (c, s)       = mk_instr (Swhile (c, s))
 let i_assert   e            = mk_instr (Sassert e)
 let i_abstract id           = mk_instr (Sabstract id)
+let i_cost     s            = mk_instr (Scost s)
 
 let s_seq      s1 s2        = stmt (s1.s_node @ s2.s_node)
 let s_empty                 = stmt []
@@ -256,6 +265,7 @@ let s_if       arg = stmt [i_if arg]
 let s_while    arg = stmt [i_while arg]
 let s_assert   arg = stmt [i_assert arg]
 let s_abstract arg = stmt [i_abstract arg]
+let s_cost     arg = stmt [i_cost arg]
 
 (* -------------------------------------------------------------------- *)
 let get_asgn = function
@@ -441,6 +451,9 @@ let s_subst (s : EcTypes.e_subst) =
     | Sabstract _ ->
         i
 
+    | Scost _ ->
+      i                                                       (* TODO : FIXME *)
+
   and s_subst s =
     ISmart.s_stmt s (List.Smart.map i_subst s.s_node)
 
@@ -512,6 +525,9 @@ and i_get_uninit_read (w : Sx.t) (i : instr) =
 
   | Sabstract (_ : EcIdent.t) ->
       (w, Sx.empty)
+
+  | Scost s  ->
+      s_get_uninit_read w s                                   (* TODO : FIXME *)
 
 let get_uninit_read (s : stmt) =
   snd (s_get_uninit_read Sx.empty s)

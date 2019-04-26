@@ -111,6 +111,7 @@ type pinstr_r =
   | PSif     of pscond * pscond list * pstmt
   | PSwhile  of pscond
   | PSassert of pexpr
+  | PScost   of pstmt
 
 and pscond = pexpr * pstmt
 and pinstr = pinstr_r located

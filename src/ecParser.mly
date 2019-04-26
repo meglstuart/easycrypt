@@ -400,6 +400,7 @@
 %token CONGR
 %token CONSEQ
 %token CONST
+%token COST
 %token CUT
 %token DEBUG
 %token DECLARE
@@ -1310,6 +1311,9 @@ instr:
 
 | WHILE LPAREN c=expr RPAREN b=block
    { PSwhile (c, b) }
+
+| COST b = block
+   { PScost b }
 
 if_expr:
 | IF c=paren(expr) b=block el=if_else_expr
