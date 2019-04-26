@@ -43,7 +43,6 @@ and instr_node =
   | Swhile    of expr * stmt
   | Sassert   of expr
   | Sabstract of EcIdent.t
-  | Scost     of stmt
 
 and stmt = private {
   s_node : instr list;
@@ -72,7 +71,6 @@ val i_if       : expr * stmt * stmt -> instr
 val i_while    : expr * stmt -> instr
 val i_assert   : expr -> instr
 val i_abstract : EcIdent.t -> instr
-val i_cost     : stmt -> instr
 
 val s_asgn     : lvalue * expr -> stmt
 val s_rnd      : lvalue * expr -> stmt
@@ -83,7 +81,6 @@ val s_assert   : expr -> stmt
 val s_abstract : EcIdent.t -> stmt
 val s_seq      : stmt -> stmt -> stmt
 val s_empty    : stmt
-val s_cost     : stmt -> stmt
 
 val stmt  : instr list -> stmt
 val rstmt : instr list -> stmt

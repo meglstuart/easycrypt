@@ -235,7 +235,7 @@ let (_i_inuse, s_inuse, se_inuse) =
     | Sassert e ->
       se_inuse map e
     | Sabstract _ -> assert false (* FIXME *)
-    | Scost s -> s_inuse map s                                (* TODO : FIXME *)
+
   and s_inuse (map : uses) (s : stmt) =
     List.fold_left i_inuse map s.s_node
 
@@ -1947,10 +1947,6 @@ and transinstr
       let e, ety = transexp env `InProc ue pe in
       unify_or_fail env ue pe.pl_loc ~expct:tbool ety;
       [ i_assert e ]
-
-  | PScost ps ->
-      let body = transstmt env ue ps in
-      [ i_cost body ] (* TODO : FIXME *)
 
 (* -------------------------------------------------------------------- *)
 and trans_pv env { pl_desc = x; pl_loc = loc } =

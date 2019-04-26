@@ -56,7 +56,6 @@ module LowSubst = struct
     | Swhile (e, stmt)   -> i_while  (esubst e, ssubst stmt)
     | Sassert e          -> i_assert (esubst e)
     | Sabstract _        -> i
-    | Scost s            -> i                                  (* TODO : FIXME*)
 
   and issubst m (is : instr list) =
     List.map (isubst m) is

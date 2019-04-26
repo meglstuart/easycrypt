@@ -1309,9 +1309,6 @@ and pp_instr_for_form (ppe : PPEnv.t) fmt i =
   | Sabstract id -> (* FIXME *)
       Format.fprintf fmt "%s" (EcIdent.name id)
 
-  | Scost s ->
-      assert false                                            (* TODO : FIXME *)
-
 (* -------------------------------------------------------------------- *)
 and pp_stmt_for_form (ppe : PPEnv.t) fmt (s : stmt) =
   match s.s_node with
@@ -2052,8 +2049,6 @@ let at n i =
       | _  -> Some (`EBlk, `B, [])
     end
 
-  | Scost s, _ -> assert false                                (* TODO : FIXME *)
-
   | _, _ -> None
 
 let rec collect2_i i1 i2 : ppnode list =
@@ -2646,9 +2641,6 @@ let rec pp_instr_r (ppe : PPEnv.t) fmt i =
 
   | Sabstract id ->
     Format.fprintf fmt "%s" (EcIdent.name id)
-
-  | Scost s ->
-    assert false                                              (* TODO : FIXME *)
 
 and pp_instr ppe fmt i =
   Format.fprintf fmt "%a" (pp_instr_r ppe) i
