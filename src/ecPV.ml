@@ -1002,7 +1002,7 @@ and i_eqobs_in_refl env i eqo =
 
   | Sassert e -> add_eqs_refl env eqo e
   | Sabstract _ -> assert false
-  | Scost s -> assert false (*That's the interesting part?*)  (* TODO : FIXME *)
+  | Scost s -> assert false (*That's the interesting part ?*) (* TODO : FIXME *)
 
 and eqobs_inF_refl env f' eqo =
   let f = NormMp.norm_xfun env f' in

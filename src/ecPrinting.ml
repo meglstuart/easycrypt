@@ -1309,8 +1309,8 @@ and pp_instr_for_form (ppe : PPEnv.t) fmt i =
   | Sabstract id -> (* FIXME *)
       Format.fprintf fmt "%s" (EcIdent.name id)
 
-  | Scost s ->
-      assert false                                            (* TODO : FIXME *)
+  | Scost _ ->
+      Format.fprintf fmt "cost {...}"                         (* TODO : FIXME *)
 
 (* -------------------------------------------------------------------- *)
 and pp_stmt_for_form (ppe : PPEnv.t) fmt (s : stmt) =
@@ -2052,7 +2052,12 @@ let at n i =
       | _  -> Some (`EBlk, `B, [])
     end
 
-  | Scost s, _ -> assert false                                (* TODO : FIXME *)
+  | Scost s, 0 -> begin
+      match s.s_node with
+      | [] -> None
+      | _  -> Some (`EBlk, `B, [])
+
+    end                                                       (* TODO : FIXME *)
 
   | _, _ -> None
 
@@ -2648,7 +2653,8 @@ let rec pp_instr_r (ppe : PPEnv.t) fmt i =
     Format.fprintf fmt "%s" (EcIdent.name id)
 
   | Scost s ->
-    assert false                                              (* TODO : FIXME *)
+    Format.fprintf fmt "@[<v>cost {%a}@]"
+      (pp_block ppe) s                                        (* TODO : FIXME *)
 
 and pp_instr ppe fmt i =
   Format.fprintf fmt "%a" (pp_instr_r ppe) i
