@@ -35,13 +35,14 @@ module Zipper = struct
   | ZWhile  of expr * spath
   | ZIfThen of expr * spath * stmt
   | ZIfElse of expr * stmt  * spath
+  | ZCost   of spath                                          (* TODO : FIXME *)
 
   and spath = (instr list * instr list) * ipath
 
   type zipper = {
-    z_head : instr list;                (* instructions on my left (rev)       *)
-    z_tail : instr list;                (* instructions on my right (me incl.) *)
-    z_path : ipath;                     (* path (zipper) leading to me         *)
+    z_head : instr list;               (* instructions on my left (rev)       *)
+    z_tail : instr list;               (* instructions on my right (me incl.) *)
+    z_path : ipath;                    (* path (zipper) leading to me         *)
   }
 
   let cpos (i : int) : codepos1 = (0, `ByPos i)
@@ -67,6 +68,7 @@ module Zipper = struct
         | Sasgn  _, `Assign -> i-1
         | Srnd   _, `Sample -> i-1
         | Scall  _, `Call   -> i-1
+        | Scost  _, `Cost   -> i-1
         | _       , _       -> i
 
       in progress (ir :: acc) s i
@@ -137,6 +139,9 @@ module Zipper = struct
     | Sif (e, ifs1, ifs2), 1 ->
         (ZIfElse (e, ifs1, ((s1, s2), zpr)), ifs2)
 
+    | Scost s, 0 -> assert false
+        (*(ZCost ((s1, s2), zpr), s)*)                        (* TODO : FIXME *)
+
     | _ -> raise InvalidCPos
 
   let zipper_of_cpos ((nm, cp1) : codepos) s =
@@ -165,6 +170,8 @@ module Zipper = struct
     | ZWhile  (e, sp)     -> zip (Some (i_while (e, s))) sp
     | ZIfThen (e, sp, se) -> zip (Some (i_if (e, s, se))) sp
     | ZIfElse (e, se, sp) -> zip (Some (i_if (e, se, s))) sp
+    | ZCost sp            -> assert false                     (* TODO : FIXME *)
+     (*zip (Some (i_cost s)) sp*)
 
   let zip zpr = zip None ((zpr.z_head, zpr.z_tail), zpr.z_path)
 
@@ -175,6 +182,8 @@ module Zipper = struct
       | ZWhile  (_, ((_, is), ip))    -> doit (is :: acc) ip
       | ZIfThen (_, ((_, is), ip), _) -> doit (is :: acc) ip
       | ZIfElse (_, _, ((_, is), ip)) -> doit (is :: acc) ip
+      | ZCost ((_, is), ip)           -> (*doit (is :: acc) ip*)
+                                         assert false         (* TODO : FIXME *)
     in
 
     let after =
@@ -1004,6 +1013,7 @@ and regexp1_instr =
   | RCall      (*of lvalue option * EcPath.xpath * expr list*)
   | RIf        of (*expr *) regexp_instr * regexp_instr
   | RWhile     of (*expr *) regexp_instr
+  | RCost      of regexp_instr                                (* TODO : FIXME *)
 
 
 module RegexpBaseInstr = struct
@@ -1099,6 +1109,8 @@ module RegexpBaseInstr = struct
             (eat eng, [(es, sn)])
          end
 
+       | Scost s, RCost sn -> assert false                    (* TODO : FIXME *)
+
        | _, _ -> raise NoMatch
      end
 
@@ -1134,6 +1146,13 @@ module RegexpBaseInstr = struct
           let z' = zipper [] block.s_node path in
           Some z'
 
+       | Scost block ->                                       (* TODO : FIXME *)
+          (*let z = (i::z.z_head, tail), z.z_path in
+          let path = ZCost z in
+          let z' = zipper [] block.s_node path in
+          Some z'*)
+          assert false
+
        | Sasgn _ | Srnd _ | Scall _ | _ ->
           Some { z with z_head = i :: z.z_head ; z_tail = tail }
        end
@@ -1154,6 +1173,11 @@ module RegexpBaseInstr = struct
        | ZIfElse (_e, _stmttrue, ((head, tail), path)) ->
           let z' = zipper head tail path in
           next_zipper z'
+
+       | ZCost ((head, tail), path) ->                        (* TODO : FIXME *)
+          (*let z' = zipper head tail path in
+          next_zipper z'*)
+          assert false
 
   let next (e : engine) =
     next_zipper e.e_zipper |> omap (fun z ->

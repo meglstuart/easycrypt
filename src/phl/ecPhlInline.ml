@@ -290,6 +290,7 @@ module HiInternal = struct
       | Zp.ZWhile  (_, sp)    -> aux_s (IPwhile aout) sp
       | Zp.ZIfThen (_, sp, _) -> aux_s (IPif (aout, [])) sp
       | Zp.ZIfElse (_, _, sp) -> aux_s (IPif ([], aout)) sp
+      | Zp.ZCost (_, sp)      -> assert false                 (* TODO : FIXME *)
 
     and aux_s aout ((sl, _), ip) =
       aux_i [(List.length sl, aout)] ip

@@ -78,6 +78,12 @@ and trans_stmt = function
      let branch = trans_block branch in
      Base (RWhile branch)
 
+  | IM_Cost b ->
+     (*let branch = odfl any_block b in
+     let branch = trans_block branch in
+     Base (RCost branch)*)
+     assert false                                             (* TODO : FIXME *)
+
   | IM_Named (s, r) ->
      let r = odfl IM_Any r in
      let r = trans_stmt r in

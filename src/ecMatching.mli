@@ -25,13 +25,14 @@ module Zipper : sig
   | ZWhile  of expr * spath
   | ZIfThen of expr * spath * stmt
   | ZIfElse of expr * stmt  * spath
+  | ZCost   of spath                                          (* TODO : FIXME *)
 
   and spath = (instr list * instr list) * ipath
 
   type zipper = {
-    z_head : instr list;                (* instructions on my left (rev)       *)
-    z_tail : instr list;                (* instructions on my right (me incl.) *)
-    z_path : ipath ;                    (* path (zipper) leading to me         *)
+    z_head : instr list;               (* instructions on my left (rev)       *)
+    z_tail : instr list;               (* instructions on my right (me incl.) *)
+    z_path : ipath ;                   (* path (zipper) leading to me         *)
   }
 
   exception InvalidCPos
@@ -201,6 +202,7 @@ and regexp1_instr =
   | RCall
   | RIf        of regexp_instr * regexp_instr
   | RWhile     of regexp_instr
+  | RCost      of regexp_instr                                (* TODO : FIXME *)
 
 module RegexpStmt : sig
   type regexp  = regexp_instr

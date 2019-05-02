@@ -464,6 +464,7 @@ type pim_regexp =
   | IM_Call
   | IM_If     of pim_block option * pim_block option
   | IM_While  of pim_block option
+  | IM_Cost   of pim_block option
   | IM_Named  of psymbol * pim_regexp option
   | IM_Repeat of pim_repeat * pim_regexp
   | IM_Seq    of pim_regexp list
