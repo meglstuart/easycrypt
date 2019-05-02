@@ -1183,7 +1183,7 @@ let rec process_mintros_1 ?(cf = true) ttenv pis gs =
     end
 
   and intro1_full_case (st : ST.state)
-    ((prind, delta), (cnt : icasemode_full option)) pis tc
+    ((prind, delta), withor, (cnt : icasemode_full option)) pis tc
   =
     let module E = struct exception IterDone of tcenv end in
 
@@ -1198,8 +1198,8 @@ let rec process_mintros_1 ?(cf = true) ttenv pis gs =
         else
           ((fun tc -> ([2]   , t_elim_and ~reduce:red tc)),
            (fun tc -> ([1; 1], t_elim_or  ~reduce:red tc))) in
-
-      fun tc -> FApi.t_or_map [t_and; t_or] tc
+      let ts = if withor then [t_and; t_or] else [t_and] in
+      fun tc -> FApi.t_or_map ts tc
     in
 
     let onsub gs =
