@@ -142,7 +142,7 @@ let rec on_mpath_instr cb (i : instr)=
 
   | Sabstract _ -> ()
 
-  | Scost s -> assert false                                   (* TODO : FIXME *)
+  | Scost s -> on_mpath_stmt cb s                             (* TODO : FIXME *)
 
 and on_mpath_stmt cb (s : stmt) =
   List.iter (on_mpath_instr cb) s.s_node
