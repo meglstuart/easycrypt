@@ -1244,6 +1244,7 @@ let string_of_cpos1 ((off, cp) : EcParsetree.codepos1) =
             match k with
             | `If     -> "if"
             | `While  -> "while"
+            | `Cost   -> "cost"
             | `Assign -> "<-"
             | `Sample -> "<$"
             | `Call   -> "<@"
@@ -2020,6 +2021,7 @@ type ppnode1 = [
   | `If     of (EcTypes.expr)
   | `Else
   | `While  of (EcTypes.expr)
+  | `Cost
   | `None
   | `EBlk
 ]
@@ -2052,12 +2054,9 @@ let at n i =
       | _  -> Some (`EBlk, `B, [])
     end
 
-  | Scost s, 0 -> begin
-      match s.s_node with
-      | [] -> None
-      | _  -> Some (`EBlk, `B, [])
+  | Scost s, 0 -> Some (`Cost, `P, s.s_node)                  (* TODO : FIXME *)
 
-    end                                                       (* TODO : FIXME *)
+  | Scost _, 1 -> Some (`EBlk, `B, [])                        (* TODO : FIXME *)
 
   | _, _ -> None
 
@@ -2148,6 +2147,10 @@ let pp_i_blk (_ppe : PPEnv.t) fmt _ =
 
 let pp_i_abstract (_ppe : PPEnv.t) fmt id =
   Format.fprintf fmt "%s" (EcIdent.name id)
+
+let pp_i_cost (_ppe : PPEnv.t) fmt _ =
+  Format.fprintf fmt "cost {"
+
 (* -------------------------------------------------------------------- *)
 let c_ppnode1 ~width ppe (pp1 : ppnode1) =
   match pp1 with
@@ -2159,6 +2162,7 @@ let c_ppnode1 ~width ppe (pp1 : ppnode1) =
   | `If     x -> c_split ~width (pp_i_if     ppe) x
   | `Else     -> c_split ~width (pp_i_else   ppe) ()
   | `While  x -> c_split ~width (pp_i_while  ppe) x
+  | `Cost     -> c_split ~width (pp_i_cost   ppe) ()
   | `EBlk     -> c_split ~width (pp_i_blk    ppe) ()
   | `None     -> []
 
@@ -2653,7 +2657,7 @@ let rec pp_instr_r (ppe : PPEnv.t) fmt i =
     Format.fprintf fmt "%s" (EcIdent.name id)
 
   | Scost s ->
-    Format.fprintf fmt "@[<v>cost {%a}@]"
+    Format.fprintf fmt "@[<v>cost %a@]"
       (pp_block ppe) s                                        (* TODO : FIXME *)
 
 and pp_instr ppe fmt i =

@@ -399,7 +399,7 @@ type preduction = {
 }
 
 (* -------------------------------------------------------------------- *)
-type cp_match = [ `If | `While | `Assign | `Sample | `Call ]
+type cp_match = [ `If | `While | `Cost | `Assign | `Sample | `Call ]
 type cp_base  = [ `ByPos of int | `ByMatch of int option * cp_match ]
 
 type codepos1 = int * cp_base
