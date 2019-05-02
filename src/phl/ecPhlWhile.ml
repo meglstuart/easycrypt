@@ -54,7 +54,7 @@ let while_info env e s =
       let c = List.fold_left (fun c f -> Sx.add f c) c us.EcModules.aus_calls in
       (w, r, c)
 
-    | Scost s -> assert false                                 (* TODO : FIXME *)
+    | Scost s -> s_info (w, r, c) s                           (* TODO : FIXME *)
 
   and s_info info s = List.fold_left i_info info s.s_node in
 
